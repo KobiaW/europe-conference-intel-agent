@@ -165,7 +165,7 @@ def main() -> None:
         print(f"Evidence: {event.verification_notes}")
 
     save_reports(events, Path("reports"))
-    save_reports(events, Path("reports"))
+
 
 
     # Compare the latest report with the previous report
@@ -190,7 +190,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-if __name__ == "__main__":
-    main()
+    
 
