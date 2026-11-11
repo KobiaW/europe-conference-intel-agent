@@ -27,3 +27,7 @@ wheels/
 .DS_Store
 Thumbs.db
 
+
+# Generated conference reports
+reports/*.json
+reports/*.csv

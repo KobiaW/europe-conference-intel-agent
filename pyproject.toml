@@ -1,7 +1,7 @@
 [project]
 name = "europe-conference-intel-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered agent for discovering, validating, and reporting upcoming AI, cloud computing, and cybersecurity conferences across Europe."
 readme = "README.md"
 authors = [
     { name = "kobiaw", email = "kobiawilliams@yahoo.com" }
