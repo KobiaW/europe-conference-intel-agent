@@ -11,6 +11,7 @@ from agents import Agent, Runner, WebSearchTool
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from europe_conference_intel_agent.verification import verify_event
+from europe_conference_intel_agent.change_detection import latest_comparison
 
 class Conference(BaseModel):
     name: str
@@ -164,7 +165,31 @@ def main() -> None:
         print(f"Evidence: {event.verification_notes}")
 
     save_reports(events, Path("reports"))
+    save_reports(events, Path("reports"))
 
+
+    # Compare the latest report with the previous report
+    changes = latest_comparison(Path("reports"))
+
+    if changes is not None:
+        print("\nConference Intelligence Changes")
+        print(f"New: {len(changes['new'])}")
+        print(f"Updated: {len(changes['updated'])}")
+        print(
+            "Not seen in latest search: "
+            f"{len(changes['not_seen_in_latest_search'])}"
+        )
+
+        Path("reports/latest_changes.json").write_text(
+            json.dumps(changes, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    else:
+        print("No previous report available for comparison.")
+
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main()
