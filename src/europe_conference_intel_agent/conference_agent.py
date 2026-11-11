@@ -95,29 +95,108 @@ def save_reports(events: list[Conference], directory: Path) -> None:
     print(f"Events retained: {len(events)}")
 
 
-async def discover(year: int, limit: int) -> list[Conference]:
+
+async def discover(
+    year: int,
+    limit: int,
+    country: str = "All Europe",
+    category: str = "All categories",
+) -> list[Conference]:
+    """Discover conferences using the selected location and category."""
+
+    if not 2026 <= year <= 2100:
+        raise ValueError("Invalid conference year")
+
+    if not 1 <= limit <= 50:
+        raise ValueError("Conference limit must be between 1 and 50")
+
+    allowed_categories = {
+        "All categories": None,
+        "AI": "AI",
+        "Artificial Intelligence": "AI",
+        "Cloud": "Cloud",
+        "Cloud Computing": "Cloud",
+        "Cybersecurity": "Cybersecurity",
+    }
+
+    if category not in allowed_categories:
+        raise ValueError("Unsupported conference category")
+
+    selected_category = allowed_categories[category]
+
+    if country == "All Europe":
+        location_instruction = "across Europe"
+    else:
+        if not country or len(country) > 80 or not all(
+            character.isalpha() or character in " -'"
+            for character in country
+        ):
+            raise ValueError("Invalid country selection")
+
+        location_instruction = f"in {country}"
+
+    category_instruction = (
+        f"specifically covering {selected_category}"
+        if selected_category
+        else "covering AI, cloud computing, or cybersecurity"
+    )
+
     agent = Agent(
         name="European Conference Intelligence Agent",
         model=os.getenv("OPENAI_MODEL", "gpt-5.4"),
         instructions=(
-            "You are a conference intelligence research analyst. "
-            "Search the live web for genuine upcoming conferences in Europe "
-            "covering artificial intelligence, cloud computing, and cybersecurity. "
+            "You are a professional conference intelligence analyst. "
+            "Search the live web for genuine upcoming technology conferences. "
             "Use official organizer websites as primary evidence. "
-            "Never invent conferences, dates, venues, or URLs. "
+            "Never invent conferences, dates, cities, venues, or URLs. "
             "Do not treat event aggregators as proof of authenticity. "
-            "Return precise dates and official HTTPS URLs. "
+            "Conference dates may be unknown when an event has been "
+            "officially announced but its schedule is pending. "
+            "Retain preliminary announcements when credible evidence exists. "
             "Use categories AI, Cloud, or Cybersecurity. "
-            "Set verification_status to 'candidate' unless the official "
-            "organizer's site explicitly confirms the event and dates; "
-            "otherwise use 'official_source_found'. "
-            "Explain the evidence and any uncertainty in verification_notes. "
-            "A conference with insufficient evidence must not be represented "
-            "as independently verified."
+            "Do not claim independent verification based solely on "
+            "matching webpage text. "
+            "Explain evidence and uncertainty in verification_notes. "
+            "The downstream verification engine determines final "
+            "verification status."
         ),
         tools=[WebSearchTool()],
         output_type=ConferenceReport,
     )
+
+    result = await Runner.run(
+        agent,
+        (
+            f"Find up to {limit} genuine upcoming conferences "
+            f"{location_instruction}, {category_instruction}, "
+            f"scheduled for {year}. "
+            f"Today is {datetime.now(timezone.utc).date().isoformat()}. "
+            "Include official organizer URLs and evidence URLs. "
+            "Retain officially announced events whose exact dates "
+            "have not yet been published. "
+            "Do not include conferences outside the requested country "
+            "or year."
+        ),
+        max_turns=12,
+    )
+
+    events = validate_conferences(result.final_output.conferences)
+
+    if country != "All Europe":
+        events = [
+            event for event in events
+            if event.country.strip().casefold() == country.casefold()
+        ]
+
+    if selected_category:
+        events = [
+            event for event in events
+            if event.category.strip().casefold()
+            == selected_category.casefold()
+        ]
+
+    return events[:limit]
+
 
     result = await Runner.run(
         agent,
