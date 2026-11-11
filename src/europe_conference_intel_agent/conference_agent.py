@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 from agents import Agent, Runner, WebSearchTool
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
-
+from europe_conference_intel_agent.verification import verify_event
 
 class Conference(BaseModel):
     name: str
@@ -157,8 +157,19 @@ def main() -> None:
     print("Starting European conference discovery...")
 
     events = asyncio.run(discover(args.year, args.limit))
+
+    print("Checking official conference websites...")
+
+    for event in events:
+        verification = asyncio.run(verify_event(event))
+        event.verification_status = verification["status"]
+        event.verification_notes = verification["evidence"]
+
+        print(f"{event.name}: {verification['status']}")
+
     save_reports(events, Path("reports"))
 
 
 if __name__ == "__main__":
     main()
+
