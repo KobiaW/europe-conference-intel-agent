@@ -52,12 +52,6 @@ def validate_conferences(items: list[Conference]) -> list[Conference]:
         if event.end_date < event.start_date:
             continue
 
-        if not valid_url(event.official_url):
-            continue
-
-        if not valid_url(event.evidence_url):
-            continue
-
         key = (
             event.name.casefold().strip(),
             event.start_date.isoformat(),
@@ -158,14 +152,16 @@ def main() -> None:
 
     events = asyncio.run(discover(args.year, args.limit))
 
-    print("Checking official conference websites...")
+    print("Checking conference evidence...")
 
     for event in events:
         verification = asyncio.run(verify_event(event))
+
         event.verification_status = verification["status"]
         event.verification_notes = verification["evidence"]
 
-        print(f"{event.name}: {verification['status']}")
+        print(f"{event.name}: {event.verification_status}")
+        print(f"Evidence: {event.verification_notes}")
 
     save_reports(events, Path("reports"))
 
