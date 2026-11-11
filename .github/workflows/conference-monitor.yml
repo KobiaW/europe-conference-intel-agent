@@ -1,0 +1,45 @@
+name: European Conference Intelligence Monitor
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Discover and assess conferences
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+        run: |
+          uv run europe-conference-intel-agent --year 2027 --limit 10
+
+      - name: Upload conference reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conference-intelligence-reports
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 30

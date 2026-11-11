@@ -1,15 +1,18 @@
 [project]
 name = "europe-conference-intel-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI-powered agent for discovering, validating, and reporting upcoming AI, cloud computing, and cybersecurity conferences across Europe."
 readme = "README.md"
 authors = [
     { name = "kobiaw", email = "kobiawilliams@yahoo.com" }
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "httpx>=0.28.1",
     "openai-agents>=0.24.0",
     "python-dotenv>=1.2.4",
+    "streamlit>=1.67.0",
 ]
 
 [project.scripts]
