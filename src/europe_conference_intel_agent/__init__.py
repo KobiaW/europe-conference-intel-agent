@@ -1,2 +1,5 @@
 def main() -> None:
-    print("Hello from europe-conference-intel-agent!")
+    from europe_conference_intel_agent.conference_agent import main as run
+    run()
+    
+
